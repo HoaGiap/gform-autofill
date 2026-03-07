@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+venv/
+env/
+ENV/
+.env
+
+# Playwright
+test-results/
+
+# Logs
+logs/
+*.log
+
+# Cookies
+cookies.json
+
+# IDEs
+.idea/
+.vscode/
+
+# Ignore outputs
+result_*.json

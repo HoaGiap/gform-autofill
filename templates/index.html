@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GForm AutoFill</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:       #0a0a0f;
+      --surface:  #111118;
+      --border:   #1e1e2e;
+      --accent:   #00ff88;
+      --accent2:  #7c3aed;
+      --accent3:  #ff6b35;
+      --text:     #e8e8f0;
+      --muted:    #5a5a7a;
+      --success:  #00ff88;
+      --error:    #ff4757;
+      --warn:     #ffa502;
+      --mono:     'Space Mono', monospace;
+      --sans:     'Syne', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Grid BG ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,255,136,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,136,.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Glow orbs ── */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb-1 { width: 600px; height: 600px; background: rgba(124,58,237,.15); top: -200px; left: -100px; }
+    .orb-2 { width: 400px; height: 400px; background: rgba(0,255,136,.08); bottom: 100px; right: -50px; }
+
+    /* ── Layout ── */
+    .wrapper {
+      position: relative; z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.5rem 0 2.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2.5rem;
+    }
+    .logo {
+      display: flex; align-items: center; gap: .8rem;
+    }
+    .logo-icon {
+      width: 40px; height: 40px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: grid; place-items: center;
+      font-size: 1.2rem;
+    }
+    .logo-text {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -.02em;
+    }
+    .logo-text span { color: var(--accent); }
+    .badge {
+      font-family: var(--mono);
+      font-size: .65rem;
+      padding: .25rem .6rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--muted);
+      letter-spacing: .1em;
+    }
+
+    /* ── Main grid ── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 1rem 1.4rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: .6rem;
+      font-size: .75rem;
+      font-family: var(--mono);
+      letter-spacing: .1em;
+      color: var(--muted);
+    }
+    .card-header .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+    .card-body { padding: 1.4rem; }
+
+    /* ── Form controls ── */
+    .field { margin-bottom: 1.2rem; }
+    label {
+      display: block;
+      font-size: .72rem;
+      font-family: var(--mono);
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: .4rem;
+    }
+    input[type="text"], input[type="url"], input[type="number"], textarea, select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: .8rem;
+      padding: .7rem 1rem;
+      outline: none;
+      transition: border-color .2s;
+      resize: vertical;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,255,136,.08);
+    }
+    input[type="url"] {
+      font-size: .85rem;
+      padding-left: 2.8rem;
+    }
+    .input-wrap { position: relative; }
+    .input-wrap .prefix {
+      position: absolute; left: .9rem; top: 50%; transform: translateY(-50%);
+      color: var(--muted); font-family: var(--mono); font-size: .75rem;
+      pointer-events: none;
+    }
+
+    /* Toggle switch */
+    .toggles { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .toggle-item {
+      display: flex; align-items: center; gap: .5rem;
+      cursor: pointer;
+      padding: .5rem .8rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: .75rem; font-family: var(--mono);
+      transition: all .2s;
+      user-select: none;
+    }
+    .toggle-item input[type="checkbox"] { display: none; }
+    .toggle-item .checkmark {
+      width: 14px; height: 14px; border-radius: 3px;
+      border: 1.5px solid var(--muted);
+      display: grid; place-items: center;
+      font-size: .6rem; color: transparent;
+      transition: all .2s;
+    }
+    .toggle-item input:checked ~ .checkmark {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #000;
+    }
+    .toggle-item:hover { border-color: var(--accent); }
+
+    /* ── Answers area ── */
+    .answers-mode-tabs {
+      display: flex; gap: .5rem; margin-bottom: 1rem;
+    }
+    .tab-btn {
+      font-family: var(--mono); font-size: .7rem; letter-spacing: .06em;
+      padding: .35rem .8rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent; color: var(--muted);
+      cursor: pointer; transition: all .2s;
+    }
+    .tab-btn.active {
+      background: var(--accent); color: #000; border-color: var(--accent);
+      font-weight: 700;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Upload zone */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all .25s;
+      position: relative;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(0,255,136,.03);
+    }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-zone .up-icon { font-size: 2rem; margin-bottom: .5rem; }
+    .upload-zone .up-text { font-size: .8rem; color: var(--muted); }
+    .upload-zone .up-text span { color: var(--accent); }
+    .parsed-count {
+      font-family: var(--mono); font-size: .72rem;
+      margin-top: .6rem; color: var(--accent);
+    }
+
+    /* ── Submit button ── */
+    .btn-run {
+      width: 100%;
+      padding: .9rem;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--sans);
+      font-weight: 800;
+      font-size: .95rem;
+      letter-spacing: .03em;
+      cursor: pointer;
+      transition: all .2s;
+      position: relative;
+      overflow: hidden;
+      margin-top: .5rem;
+    }
+    .btn-run::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);
+      transform: translateX(-100%);
+      transition: transform .4s;
+    }
+    .btn-run:hover::after { transform: translateX(100%); }
+    .btn-run:hover { background: #00e87a; transform: translateY(-1px); }
+    .btn-run:active { transform: translateY(0); }
+    .btn-run:disabled {
+      background: var(--border); color: var(--muted); cursor: not-allowed; transform: none;
+    }
+
+    .btn-sm {
+      padding: .4rem .8rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      border-radius: 6px;
+      font-family: var(--mono); font-size: .68rem; letter-spacing: .06em;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Console / Log panel ── */
+    .console-panel {
+      font-family: var(--mono);
+      font-size: .72rem;
+      line-height: 1.7;
+      background: #06060b;
+      border-radius: 8px;
+      padding: 1rem;
+      height: 320px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+    }
+    .console-panel::-webkit-scrollbar { width: 4px; }
+    .console-panel::-webkit-scrollbar-track { background: transparent; }
+    .console-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .log-line { padding: .1rem 0; }
+    .log-line .ts { color: #3a3a5a; margin-right: .5rem; }
+    .log-line.INFO .tag { color: var(--accent); }
+    .log-line.ERROR .tag { color: var(--error); }
+    .log-line.WARNING .tag { color: var(--warn); }
+    .log-line.DEBUG .tag { color: var(--muted); }
+    .log-line .msg { color: var(--text); }
+    .log-line.ERROR .msg { color: var(--error); }
+    .log-idle { color: var(--muted); font-style: italic; }
+
+    /* ── Status bar ── */
+    .status-bar {
+      display: flex; align-items: center; gap: .8rem;
+      padding: .6rem 1rem;
+      border-top: 1px solid var(--border);
+      font-family: var(--mono); font-size: .7rem; color: var(--muted);
+    }
+    .status-indicator {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--muted);
+      transition: background .3s;
+    }
+    .status-indicator.running {
+      background: var(--accent);
+      animation: pulse 1s infinite;
+    }
+    .status-indicator.done { background: var(--success); }
+    .status-indicator.error { background: var(--error); }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .4; transform: scale(.8); }
+    }
+
+    /* ── Results cards ── */
+    .results-wrap { margin-top: 1rem; }
+    .result-item {
+      display: flex; align-items: center; gap: .8rem;
+      padding: .6rem .9rem;
+      border-radius: 6px;
+      margin-bottom: .4rem;
+      font-family: var(--mono); font-size: .72rem;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      animation: slideIn .3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .result-item.success { border-color: rgba(0,255,136,.25); }
+    .result-item.fail    { border-color: rgba(255,71,87,.25); }
+    .result-icon { font-size: .9rem; }
+    .result-meta { flex: 1; color: var(--muted); }
+    .result-meta strong { color: var(--text); }
+
+    /* ── Summary chips ── */
+    .summary-chips {
+      display: flex; gap: .6rem; margin-top: .8rem; flex-wrap: wrap;
+    }
+    .chip {
+      padding: .3rem .7rem;
+      border-radius: 20px;
+      font-family: var(--mono); font-size: .7rem; font-weight: 700;
+    }
+    .chip.success { background: rgba(0,255,136,.12); color: var(--success); border: 1px solid rgba(0,255,136,.3); }
+    .chip.fail    { background: rgba(255,71,87,.12);  color: var(--error);   border: 1px solid rgba(255,71,87,.3); }
+    .chip.total   { background: rgba(124,58,237,.12); color: #a78bfa;        border: 1px solid rgba(124,58,237,.3); }
+
+    /* ── Download examples ── */
+    .example-links { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem; }
+
+    /* ── Progress bar ── */
+    .progress-wrap { margin-top: .8rem; }
+    .progress-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      width: 0%;
+      transition: width .5s ease;
+      border-radius: 2px;
+    }
+    .progress-label {
+      font-family: var(--mono); font-size: .68rem;
+      color: var(--muted); margin-top: .3rem;
+      display: flex; justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="wrapper">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-text">GForm <span>AutoFill</span></div>
+    </div>
+    <div style="display:flex;gap:.6rem;align-items:center">
+      <span class="badge">v1.0</span>
+      <span class="badge">PYTHON · PLAYWRIGHT</span>
+    </div>
+  </header>
+
+  <div class="main-grid">
+
+    <!-- Left column: Config -->
+    <div>
+
+      <!-- URL Card -->
+      <div class="card" style="margin-bottom:1.2rem">
+        <div class="card-header"><div class="dot"></div> GOOGLE FORM URL</div>
+        <div class="card-body">
+          <div class="field">
+            <label>NHẬP LINK GOOGLE FORM</label>
+            <div class="input-wrap">
+              <span class="prefix">🔗</span>
+              <input type="url" id="formUrl" placeholder="https://docs.google.com/forms/d/..." />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Answers Card -->
+      <div class="card" style="margin-bottom:1.2rem">
+        <div class="card-header"><div class="dot"></div> DỮ LIỆU CÂU TRẢ LỜI</div>
+        <div class="card-body">
+
+          <div class="answers-mode-tabs">
+            <button class="tab-btn active" data-tab="manual">✏️ Nhập thủ công</button>
+            <button class="tab-btn" data-tab="upload">📎 Upload file</button>
+            <button class="tab-btn" data-tab="random">🎲 Ngẫu nhiên</button>
+          </div>
+
+          <!-- Manual tab -->
+          <div class="tab-panel active" id="tab-manual">
+            <div class="field">
+              <label>JSON FORMAT — {"tên câu hỏi": "câu trả lời", ...}</label>
+              <textarea id="answersJson" rows="8" placeholder='{
+  "Họ và tên": "Nguyễn Văn A",
+  "Email": "test@example.com",
+  "Đánh giá dịch vụ": "Rất tốt",
+  "Nhận xét": "Hài lòng!"
+}'></textarea>
+            </div>
+          </div>
+
+          <!-- Upload tab -->
+          <div class="tab-panel" id="tab-upload">
+            <div class="upload-zone" id="uploadZone">
+              <input type="file" id="fileInput" accept=".json,.csv,.xlsx,.xls" />
+              <div class="up-icon">📂</div>
+              <div class="up-text">Kéo thả hoặc <span>click để chọn file</span></div>
+              <div class="up-text" style="margin-top:.3rem">Hỗ trợ: <strong>JSON, CSV, XLSX</strong></div>
+              <div class="parsed-count" id="parsedCount"></div>
+            </div>
+            <div class="example-links">
+              <a href="/api/example-json" class="btn-sm">⬇ JSON mẫu</a>
+              <a href="/api/example-csv" class="btn-sm">⬇ CSV mẫu</a>
+            </div>
+          </div>
+
+          <!-- Random tab -->
+          <div class="tab-panel" id="tab-random">
+            <div style="padding:1.5rem;text-align:center;color:var(--muted);font-family:var(--mono);font-size:.8rem">
+              <div style="font-size:2.5rem;margin-bottom:.6rem">🎲</div>
+              Tool sẽ tự động chọn câu trả lời ngẫu nhiên<br/>
+              cho mọi loại câu hỏi trong form.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Options Card -->
+      <div class="card">
+        <div class="card-header"><div class="dot"></div> CÀI ĐẶT NÂNG CAO</div>
+        <div class="card-body">
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+            <div class="field" style="margin-bottom:0">
+              <label>SỐ LẦN GỬI</label>
+              <input type="number" id="repeatCount" value="1" min="1" max="100" />
+            </div>
+            <div class="field" style="margin-bottom:0">
+              <label>PROXY (tùy chọn)</label>
+              <input type="text" id="proxyUrl" placeholder="http://user:pass@host:8080" />
+            </div>
+          </div>
+
+          <div class="toggles">
+            <label class="toggle-item">
+              <input type="checkbox" id="chkHeadless" checked />
+              <span class="checkmark">✓</span>
+              Headless mode
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" id="chkRandom" checked />
+              <span class="checkmark">✓</span>
+              Fill random nếu thiếu data
+            </label>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right column: Console + Results -->
+    <div>
+
+      <!-- Run Button -->
+      <button class="btn-run" id="btnRun" onclick="startJob()">
+        ⚡ CHẠY AUTO-FILL
+      </button>
+
+      <!-- Progress -->
+      <div class="progress-wrap" id="progressWrap" style="display:none">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-label">
+          <span id="progressText">Đang khởi động...</span>
+          <span id="progressPct">0%</span>
+        </div>
+      </div>
+
+      <!-- Console Card -->
+      <div class="card" style="margin-top:1.2rem">
+        <div class="card-header">
+          <div class="dot" id="statusDot"></div>
+          <span id="statusLabel">CONSOLE LOG</span>
+          <div style="margin-left:auto;display:flex;gap:.4rem">
+            <button class="btn-sm" onclick="clearConsole()">🗑 Xóa</button>
+          </div>
+        </div>
+        <div class="console-panel" id="consolePanel">
+          <div class="log-idle">▌ Sẵn sàng. Nhập URL và nhấn Chạy...</div>
+        </div>
+        <div class="status-bar">
+          <div class="status-indicator" id="statusIndicator"></div>
+          <span id="statusText">Idle</span>
+        </div>
+      </div>
+
+      <!-- Results Card -->
+      <div class="card" style="margin-top:1.2rem" id="resultsCard" style="display:none">
+        <div class="card-header"><div class="dot"></div> KẾT QUẢ</div>
+        <div class="card-body">
+          <div class="summary-chips" id="summaryChips"></div>
+          <div class="results-wrap" id="resultsWrap"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  let currentJobId = null;
+  let pollInterval = null;
+  let uploadedAnswers = null;
+  let activeTab = 'manual';
+
+  // ── Tab switching ──────────────────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      activeTab = btn.dataset.tab;
+      document.getElementById('tab-' + activeTab).classList.add('active');
+    });
+  });
+
+  // ── File Upload ────────────────────────────────────────────────────────────
+  const uploadZone = document.getElementById('uploadZone');
+  const fileInput  = document.getElementById('fileInput');
+
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault(); uploadZone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) handleUpload(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) handleUpload(e.target.files[0]); });
+
+  async function handleUpload(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.error) { alert('Lỗi: ' + data.error); return; }
+      uploadedAnswers = data.answers;
+      document.getElementById('parsedCount').textContent =
+        `✓ Đã parse ${data.count} câu trả lời từ "${file.name}"`;
+    } catch(e) { alert('Lỗi upload: ' + e); }
+  }
+
+  // ── Get answers ────────────────────────────────────────────────────────────
+  function getAnswers() {
+    if (activeTab === 'upload') return uploadedAnswers || {};
+    if (activeTab === 'random') return {};
+    const raw = document.getElementById('answersJson').value.trim();
+    if (!raw) return {};
+    try { return JSON.parse(raw); }
+    catch {
+      // Parse key: value format
+      const ans = {};
+      raw.split('\n').forEach(line => {
+        const [k, ...vParts] = line.split(':');
+        if (k && vParts.length) ans[k.trim()] = vParts.join(':').trim();
+      });
+      return ans;
+    }
+  }
+
+  // ── Start Job ──────────────────────────────────────────────────────────────
+  async function startJob() {
+    const url = document.getElementById('formUrl').value.trim();
+    if (!url) { alert('Vui lòng nhập URL Google Form!'); return; }
+
+    const payload = {
+      url,
+      answers: getAnswers(),
+      fill_random: document.getElementById('chkRandom').checked,
+      repeat: parseInt(document.getElementById('repeatCount').value) || 1,
+      headless: document.getElementById('chkHeadless').checked,
+      proxy: document.getElementById('proxyUrl').value.trim(),
+    };
+
+    document.getElementById('btnRun').disabled = true;
+    document.getElementById('resultsCard').style.display = 'none';
+    clearConsole();
+    setStatus('running', 'Đang chạy...');
+    showProgress(true);
+
+    try {
+      const res  = await fetch('/api/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.error) {
+        appendLog('ERROR', data.error);
+        setStatus('error', 'Lỗi');
+        document.getElementById('btnRun').disabled = false;
+        return;
+      }
+      currentJobId = data.job_id;
+      appendLog('INFO', `Job #${currentJobId} đã bắt đầu`);
+      pollInterval = setInterval(pollJob, 1200);
+    } catch(e) {
+      appendLog('ERROR', 'Không kết nối được server: ' + e);
+      setStatus('error', 'Lỗi kết nối');
+      document.getElementById('btnRun').disabled = false;
+    }
+  }
+
+  // ── Poll Job ───────────────────────────────────────────────────────────────
+  let lastLogCount = 0;
+  async function pollJob() {
+    if (!currentJobId) return;
+    try {
+      const res  = await fetch('/api/job/' + currentJobId);
+      const job  = await res.json();
+
+      // Append new logs
+      const newLogs = job.logs.slice(lastLogCount);
+      newLogs.forEach(l => appendLog(l.level, l.msg, l.time));
+      lastLogCount = job.logs.length;
+
+      // Progress
+      if (job.repeat > 1 && job.results) {
+        const pct = Math.round((job.results.length / job.repeat) * 100);
+        updateProgress(pct, `${job.results.length}/${job.repeat} lần gửi`);
+      }
+
+      if (job.status === 'done' || job.status === 'error') {
+        clearInterval(pollInterval);
+        lastLogCount = 0;
+        document.getElementById('btnRun').disabled = false;
+        showProgress(false);
+
+        if (job.status === 'done') {
+          setStatus('done', `Hoàn thành — ${job.summary?.success || 0}/${job.summary?.total || 0} thành công`);
+          showResults(job);
+        } else {
+          setStatus('error', 'Lỗi: ' + (job.error || 'Unknown'));
+        }
+      }
+    } catch(e) { /* ignore */ }
+  }
+
+  // ── UI Helpers ─────────────────────────────────────────────────────────────
+  function appendLog(level, msg, time) {
+    const panel = document.getElementById('consolePanel');
+    // Remove idle message
+    panel.querySelector('.log-idle')?.remove();
+
+    const div  = document.createElement('div');
+    div.className = `log-line ${level}`;
+    const ts   = time || new Date().toLocaleTimeString('vi', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const tag  = `[${level}]`.padEnd(9);
+    div.innerHTML = `<span class="ts">${ts}</span><span class="tag">${tag}</span><span class="msg"> ${escHtml(msg)}</span>`;
+    panel.appendChild(div);
+    panel.scrollTop = panel.scrollHeight;
+  }
+
+  function clearConsole() {
+    document.getElementById('consolePanel').innerHTML = '<div class="log-idle">▌ Console xóa...</div>';
+    lastLogCount = 0;
+  }
+
+  function setStatus(state, text) {
+    const ind  = document.getElementById('statusIndicator');
+    const lbl  = document.getElementById('statusLabel');
+    const txt  = document.getElementById('statusText');
+    ind.className = 'status-indicator ' + state;
+    txt.textContent = text;
+    if (state === 'running') lbl.textContent = 'ĐANG CHẠY...';
+    else if (state === 'done') lbl.textContent = 'HOÀN THÀNH';
+    else if (state === 'error') lbl.textContent = 'LỖI';
+    else lbl.textContent = 'CONSOLE LOG';
+  }
+
+  function showProgress(show) {
+    document.getElementById('progressWrap').style.display = show ? 'block' : 'none';
+    if (show) { updateProgress(0, 'Đang khởi động...'); }
+  }
+
+  function updateProgress(pct, label) {
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressPct').textContent = pct + '%';
+    document.getElementById('progressText').textContent = label;
+  }
+
+  function showResults(job) {
+    const card = document.getElementById('resultsCard');
+    card.style.display = '';
+
+    const s = job.summary || {};
+    document.getElementById('summaryChips').innerHTML = `
+      <span class="chip total">TỔNG: ${s.total || 0}</span>
+      <span class="chip success">✅ ${s.success || 0} thành công</span>
+      ${s.failed ? `<span class="chip fail">❌ ${s.failed} thất bại</span>` : ''}
+    `;
+
+    const wrap = document.getElementById('resultsWrap');
+    wrap.innerHTML = '';
+    (job.results || []).forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'result-item ' + (r.success ? 'success' : 'fail');
+      div.innerHTML = `
+        <span class="result-icon">${r.success ? '✅' : '❌'}</span>
+        <span class="result-meta">
+          <strong>Lần #${r.attempt}</strong>
+          — ${r.timestamp ? r.timestamp.replace('T',' ').slice(0,19) : ''}
+          ${r.error ? `<br/><span style="color:var(--error)">${escHtml(r.error)}</span>` : ''}
+        </span>
+      `;
+      wrap.appendChild(div);
+    });
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# Google Form Auto-Fill Tool - Dependencies
+# Cài đặt: pip install -r requirements.txt
+
+# ── Web framework ──────────────────────────────
+flask>=3.0.0
+
+# ── Browser automation ─────────────────────────
+playwright>=1.40.0
+# Sau khi cài, chạy: playwright install chromium
+
+# ── Data processing ────────────────────────────
+pandas>=2.0.0
+openpyxl>=3.1.0       # Đọc file Excel (.xlsx)
+
+# ── Utilities ──────────────────────────────────
+python-dotenv>=1.0.0  # Quản lý biến môi trường
+
+# ── Optional: CLI parsing ──────────────────────
+# argparse đã có sẵn trong Python stdlib

@@ -1,0 +1,20 @@
+{
+  "_comment": "File ví dụ - Thay các key bằng tiêu đề câu hỏi thực của form bạn",
+  
+  "Họ và tên": "Nguyễn Văn A",
+  "Email": "nguyenvana@example.com",
+  "Số điện thoại": "0901234567",
+  
+  "Bạn đánh giá dịch vụ như thế nào?": "Rất tốt",
+  "Mức độ hài lòng": "5",
+  
+  "Bạn biết đến chúng tôi qua đâu?": ["Mạng xã hội", "Bạn bè giới thiệu"],
+  
+  "Nhận xét của bạn": "Dịch vụ rất tốt, nhân viên nhiệt tình và chuyên nghiệp. Tôi rất hài lòng!",
+  
+  "Giới tính": "Nam",
+  "Độ tuổi": "25-34",
+  "Nghề nghiệp": "Nhân viên văn phòng",
+  
+  "Bạn có muốn nhận email thông báo không?": "Có"
+}
