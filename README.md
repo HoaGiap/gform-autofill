@@ -38,6 +38,31 @@ Mở `http://localhost:5000` để dùng giao diện web với đầy đủ tín
 - Cấu hình số lần gửi, proxy, headless mode
 - Xem log real-time và kết quả
 
+### Mẹo: Cấu hình Đáp án Cố định & Xoay vòng
+
+Trong ô **Câu trả lời cho trước (Tuỳ chọn)** trên giao diện Web, bạn có thể thiết lập cách Tool điền Form như sau:
+
+**1. Đáp án cố định (Tất cả các lần gửi điền giống nhau):**
+Bạn chỉ cần gõ Tên câu hỏi và Đáp án.
+```text
+email của bạn : my.fixed.email@gmail.com
+Bạn có thể tham dự không? : Có, tôi sẽ tới đó
+```
+
+**2. Đáp án xoay vòng (Mỗi lần gửi điền một đáp án khác nhau theo thứ tự):**
+Sử dụng cấu trúc JSON `[ ... ]` để bọc các đáp án. Rất hữu ích khi bạn có 1 danh sách Email cần rải đều!
+```json
+{
+  "email của bạn": [
+    "user1@gmail.com",
+    "user2@gmail.com",
+    "user3@gmail.com"
+  ],
+  "Bạn có thể tham dự không?": "Có, tôi sẽ tới đó"
+}
+```
+*Lưu ý:* Những câu hỏi **không được liệt kê** ở danh sách trên sẽ được Tool tự động **tạo câu trả lời ngẫu nhiên** hoàn toàn.
+
 ---
 
 ## 💻 Dùng CLI
